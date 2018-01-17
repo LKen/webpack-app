@@ -9,6 +9,7 @@
     "stage-2"
   ],
   "plugins": ["transform-runtime"],
+  "comments": false, // 转换城代码不带注释
   "env": {
     "test": {
       "presets": ["env", "stage-2"],

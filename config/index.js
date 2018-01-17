@@ -4,6 +4,7 @@ var path = require('path')
 module.exports = {
   build: {
     env: require('./prod.env'),
+    // 将参数 to【last param 】 位置的字符解析到一个绝对路径里
     index: path.resolve(__dirname, '../dist/index.html'),
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
@@ -27,6 +28,7 @@ module.exports = {
     autoOpenBrowser: true,
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
+    // 需要代理的接口，哪些接口被转发
     proxyTable: {},
     // CSS Sourcemaps off by default because relative paths are "buggy"
     // with this option, according to the CSS-Loader README
