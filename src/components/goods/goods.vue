@@ -2,7 +2,8 @@
 	<div class="goods">
 		<div class="menu-wrapper" ref="menuWrapper">
 			<ul>
-				<li v-for="item in goods" :key="item.id" class="menu-item">
+				<li v-for="(item, index) in goods" :key="item.id" class="menu-item" :class="{'current': currentIndex === index}" 
+					@click="selectMenu(index, $event)">
 					<span class="text border-1px">
 						<span class="icon" v-show="item.type>-1" :class="classMap[item.type]"></span>{{item.name}}
 					</span>
@@ -33,11 +34,13 @@
 				</li>
 			</ul>
 		</div>
+		<shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
 	</div>
 </template>
 
 <script>
 	import BScroll from 'better-scroll';
+	import shopcart from '@/components/shopcart/shopcart';
 	
 	const ERR_OK = 0;
 	
@@ -72,10 +75,10 @@
 		},
 		computed: {
 			currentIndex() {
-				for (let i=0; i < this.listHeight; i++) {
+				for (let i=0; i < this.listHeight.length; i++) {
 					let height1 = this.listHeight[i];
 					let height2 = this.listHeight[i + 1];
-					if (!height2 || (this.scrollY > height1 && this.scrollY < height2)) {
+					if (!height2 || (this.scrollY >= height1 && this.scrollY < height2)) {
 						return i;
 					}
 				}
@@ -83,8 +86,18 @@
 			}
 		},
 		methods: {
+			selectMenu(index, event) {
+				if(!event._constructed) {
+					return false;
+				}
+				let foodList = this.$refs.foodsWrapper.getElementsByClassName('food-list-hook');
+				let el = foodList[index];
+				this.foodsScroll.scrollToElement(el, 300);
+			},
 			_initScroll() {
-				this.menuScroll = new BScroll(this.$refs.menuWrapper, {});
+				this.menuScroll = new BScroll(this.$refs.menuWrapper, {
+					click: true
+				});
 				
 				this.foodsScroll = new BScroll(this.$refs.foodsWrapper, {
 					probeType: 3
@@ -98,12 +111,12 @@
 				let foodList = this.$refs.foodsWrapper.getElementsByClassName('food-list-hook');
 				let height = 0;
 				this.listHeight.push(height);
-				
-				for(let i = 0; i < foodList.length && this.listHeight.push(foodList[i].clientHeight); ++i){};
-				
-				console.log(this.listHeight);
+				for(let i = 0; i < foodList.length && (height += foodList[i].clientHeight, this.listHeight.push(height)); ++i){};
 			}
-		}	
+		},
+		components: {
+			shopcart: shopcart
+		}
 	};
 </script>
 
@@ -127,6 +140,14 @@
 				width: 56px;
 				line-height: 14px;
 				padding: 0 12px;
+				&.current /* dynamic*/
+					position: relative;
+					z-index: 10;
+					margin-top: -1px;
+					background: #fff;
+					font-weight: 700;
+					.text
+						@include border-none();
 				.text
 					display: table-cell;
 					width: 56px;
@@ -167,7 +188,7 @@
 				margin: 18px;
 				padding-bottom: 18px;
 				@include border-1px(rgba(7,17,27,.1));
-				&.last-child
+				&:last-child
 					@include border-none();
 					margin-bottom: 0;
 				.icon
