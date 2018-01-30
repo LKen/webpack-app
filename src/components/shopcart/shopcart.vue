@@ -95,8 +95,9 @@
 			}
 		},
 		methods: {
-			_drop(target) {
-				
+			drop(event) {
+				if(!event._constructed) return;
+				console.log(event.target);
 			}
 		}
 	};

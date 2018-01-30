@@ -29,7 +29,7 @@
 									<span class="now">￥{{food.price}}</span><span v-show="food.oldPrice" class="old">￥{{food.oldPrice}}</span>
 								</div>
 								<div class="cartcontrol-wrapper">
-									<cartcontrol :food="food"></cartcontrol>
+									<cartcontrol :food="food" @cartAdd="_drop($event)"></cartcontrol>
 								</div>
 							</div>
 						</li>
@@ -37,7 +37,7 @@
 				</li>
 			</ul>
 		</div>
-		<shopcart :selectFoods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
+		<shopcart ref="shopcart" :selectFoods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
 	</div>
 </template>
 
@@ -45,10 +45,10 @@
 	import BScroll from 'better-scroll';
 	import shopcart from '@/components/shopcart/shopcart';
 	import cartcontrol from '@/components/cartcontrol/cartcontrol';
-	import globalArgs from '@/common/js/globalArgs';
+	// import globalArgs from '@/common/js/globalArgs';
 	
 	const ERR_OK = 0;
-	let eventHub = globalArgs.eventHub;
+	// let eventHub = globalArgs.eventHub;
 	
 	export default {
 		props: {
@@ -64,7 +64,7 @@
 			};
 		},
 		created() {
-			eventHub.$on('cart.add', this._drop);
+			// eventHub.$on('cartAdd', this._drop);
 			
 			this.classMap = ['decrease', 'discount', 'special', 'invoice', 'guarantee'];
 			
@@ -82,7 +82,7 @@
 			});
 		},
 		beforeDestroy() {
-			eventHub.$off('cart.add', this._drop);
+			// eventHub.$off('cartAdd', this._drop);
 		},
 		computed: {
 			currentIndex() {
@@ -135,6 +135,9 @@
 				let height = 0;
 				this.listHeight.push(height);
 				for(let i = 0; i < foodList.length && (height += foodList[i].clientHeight, this.listHeight.push(height)); ++i){};
+			},
+			_drop(target) {
+				this.$refs.shopcart.drop(target);
 			}
 		},
 		components: {

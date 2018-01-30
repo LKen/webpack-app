@@ -11,6 +11,10 @@
 </template>
 
 <script type="text/ecmascript-6">
+	// import globalArgs from '@/common/js/globalArgs';
+	
+	// let eventHub = globalArgs.eventHub;
+	
 	export default {
 		props: {
 			food: {
@@ -29,7 +33,8 @@
 				} else {
 					this.food.count++;
 				}
-				this.$emit('cart.add', event.target);
+				this.$emit('cartAdd', event);
+				// eventHub.$emit('cartAdd', event.target);
 			},
 			decreaseCart(event) {
 				if(!event._constructed) return;
