@@ -28,21 +28,27 @@
 								<div class="price">
 									<span class="now">￥{{food.price}}</span><span v-show="food.oldPrice" class="old">￥{{food.oldPrice}}</span>
 								</div>
+								<div class="cartcontrol-wrapper">
+									<cartcontrol :food="food"></cartcontrol>
+								</div>
 							</div>
 						</li>
 					</ul>
 				</li>
 			</ul>
 		</div>
-		<shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
+		<shopcart :selectFoods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
 	</div>
 </template>
 
 <script>
 	import BScroll from 'better-scroll';
 	import shopcart from '@/components/shopcart/shopcart';
+	import cartcontrol from '@/components/cartcontrol/cartcontrol';
+	import globalArgs from '@/common/js/globalArgs';
 	
 	const ERR_OK = 0;
+	let eventHub = globalArgs.eventHub;
 	
 	export default {
 		props: {
@@ -52,12 +58,14 @@
 		},
 		data() {
 			return {
-				goods: {},
+				goods: [],
 				listHeight: [],
 				scrollY: 0
 			};
 		},
 		created() {
+			eventHub.$on('cart.add', this._drop);
+			
 			this.classMap = ['decrease', 'discount', 'special', 'invoice', 'guarantee'];
 			
 			this.$http.get('/api/goods').then((response) => {
@@ -73,6 +81,9 @@
 				}
 			});
 		},
+		beforeDestroy() {
+			eventHub.$off('cart.add', this._drop);
+		},
 		computed: {
 			currentIndex() {
 				for (let i=0; i < this.listHeight.length; i++) {
@@ -83,6 +94,17 @@
 					}
 				}
 				return 0;
+			},
+			selectFoods() {
+				let _foods = [];
+				this.goods.forEach((good) => {
+					good.foods.forEach((food) => {
+						if (food.count) {
+							_foods.push(food);
+						}
+					});
+				});
+				return _foods;
 			}
 		},
 		methods: {
@@ -100,6 +122,7 @@
 				});
 				
 				this.foodsScroll = new BScroll(this.$refs.foodsWrapper, {
+					click: true,
 					probeType: 3
 				});
 				
@@ -115,7 +138,8 @@
 			}
 		},
 		components: {
-			shopcart: shopcart
+			shopcart,
+			cartcontrol
 		}
 	};
 </script>
@@ -221,5 +245,10 @@
 						.old
 							text-decoration: line-through;
 							font-size: 10px;
-							color: rgb(147, 153, 159)	
+							color: rgb(147, 153, 159);
+					.cartcontrol-wrapper
+						position: absolute
+						right: 0
+						bottom: 12px
+						
 </style>

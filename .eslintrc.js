@@ -31,6 +31,9 @@ module.exports = {
     "no-trailing-spaces": 0,
     "space-infix-ops": 0,
     "space-before-blocks": 0,
-    "keyword-spacing": 0
+    "keyword-spacing": 0,
+    "padded-blocks": 0,
+		// "no-unused-vars", 0
+    // 'curly': ["error", "multi-or-nest"]
   }
 }
