@@ -33,6 +33,8 @@ module.exports = {
     "space-before-blocks": 0,
     "keyword-spacing": 0,
     "padded-blocks": 0,
+    "one-var": 0,
+    "spaced-comment": 0
 		// "no-unused-vars", 0
     // 'curly': ["error", "multi-or-nest"]
   }

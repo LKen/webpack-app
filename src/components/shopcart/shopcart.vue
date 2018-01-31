@@ -17,9 +17,13 @@
 				</div>
 			</div>
 			<div class="ball-wrapper">
-				<transition-group name="drop" tag="p">
+				<transition-group name="drop" tag="div" 
+					@before-enter="beforeEnter"
+					v-on:enter="enter"
+					@after-enter="afterEnter"
+					>
 					<div class="ball" v-for="(ball, index) in balls" v-show="ball.show" :key="index">
-						<span class="inner"></span>
+						<span class="inner inner-hook"></span>
 					</div>
 				</transition-group>
 			</div>
@@ -31,12 +35,12 @@
 	export default {
 		props: {
 			deliveryPrice: { // 配送费
-				type: Number,
-				default: 0
+				type: Number
+				// default: 0
 			},
 			minPrice: { // 起送费
-				type: Number,
-				default: 0
+				type: Number
+				// default: 0
 			},
 			// 购物车清单
 			selectFoods: {
@@ -58,7 +62,8 @@
 					{
 						show: false
 					}
-				]
+				],
+				dropBalls: []
 			};
 		},
 		computed: {
@@ -95,9 +100,55 @@
 			}
 		},
 		methods: {
-			drop(event) {
-				if(!event._constructed) return;
-				console.log(event.target);
+			drop(el) {
+				for (let i=0; i<this.balls.length; i++) {
+					let ball = this.balls[i];
+					if (!ball.show) {
+						ball.show = true;
+						ball.el = el;
+						this.dropBalls.push(ball);
+						return;
+					}
+				}
+			},
+			beforeEnter(el) {
+				let count = this.balls.length;
+				while (count--) {
+					let ball = this.balls[count];
+					if (ball.show) {
+						let rect = ball.el.getBoundingClientRect();
+						let x = rect.left - 32,
+							y = -(window.innerHeight - rect.top - 22);
+							
+						el.style.display = '';
+						el.style.webkitTransform = `translate3d(0, ${y}px, 0)`;
+						el.style.transform = `translate3d(0, ${y}px, 0)`;
+						let inner = el.getElementsByClassName('inner-hook')[0];
+						console.log(inner);
+						inner.style.webkitTransform = `translate3d(0, ${x}px, 0)`;
+						inner.style.transform = `translate3d(0, ${x}px, 0)`;
+					}
+				}
+			},
+			enter(el, done) {
+				/* eslint-disable no-unused-vars */
+				let rf = el.offsetHeight; // 强制重绘
+				this.$nextTick(() => {
+					el.style.webkitTransform = 'translate3d(0, 0, 0)';
+					el.style.transform = 'translate3d(0, 0, 0)';
+					
+					let inner = el.getElementsByClassName('inner-hook')[0];
+					inner.style.webkitTransform = 'translate3d(0, 0, 0)';
+					inner.style.transform = 'translate3d(0, 0, 0)';
+				});
+				done();
+			},
+			afterEnter(el) {
+				let ball = this.dropBalls.shift();
+				if (ball) {
+					ball.show = false;
+					el.style.display = 'none';
+				}
 			}
 		}
 	};
@@ -197,11 +248,11 @@
 			z-index: 200
 			&.drop-enter,
 			&.drop-leave
-				transition: all 0.4s
+				transition: all 4s
 			.inner
 				width: 16px
 				height: 16px
 				border-radius: 50%
 				background: rgb(0, 160, 200)
-				transition: all 0.4s
+				transition: all 4s
 </style>
