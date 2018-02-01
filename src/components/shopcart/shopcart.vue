@@ -1,6 +1,6 @@
 <template>
 	<div class="shopcart">
-		<div class="content">
+		<div class="content" @click="toggleList($event)">
 			<div class="content-left">
 				<div class="logo-wrapper">
 					<div class="logo" :class="{highLight: totalCount > 0}">
@@ -11,18 +11,19 @@
 				<div class="price" :class="{highLight: totalPrice > 0}">￥{{totalPrice}}</div>
 				<div class="desc">另需配送费￥{{deliveryPrice}}元</div>
 			</div>
-			<div class="content-right">
+			<div class="content-right" @click.stop="pay">
 				<div class="pay" :class="payClass">
 					{{payDesc}}
 				</div>
 			</div>
-			<!-- 这里不能用transition-group 虽然效果用v-for渲染出来，但是小球的动画效果是单独一个一个触发的,并不是整体列表动画 -->
-			<div class="ball-wrapper" v-for="(ball, index) in balls" :key="index" v-bind:css="false" :data-id="index">
+		</div>
+		<!-- 这里不能用transition-group 虽然效果用v-for渲染出来，但是小球的动画效果是单独一个一个触发的,并不是整体列表动画 -->
+		<div class="ball-container">
+			<div class="ball-wrapper transition-hook" v-for="(ball, index) in balls" :key="index" v-bind:css="false" :data-id="index">
 				<transition name="drop"
 						@before-enter="beforeDrop" 
 						@enter="dropping" 
-						@after-enter="afterDropped" 
-						v-on:leave="leave"
+						@after-enter="dropped" 
 						>
 					<div class="ball" v-show="ball.show">
 						<div class="inner inner-hook"></div>
@@ -30,10 +31,39 @@
 				</transition>
 			</div>
 		</div>
+		<transition 
+			name="fold" 
+			>
+			<div class="shopcart-list" v-show="listShow">
+				<div class="list-header">
+					<h1 class="title">购物车</h1>
+					<span class="empty" @click="empty">清空</span>
+				</div>
+				<div class="list-content" ref="listContent">
+					<ul>
+						<li class="food" v-for="food in selectFoods" :key="food.id">
+							<span class="name">{{food.name}}</span>
+							<div class="price">
+								<span>￥{{food.price * food.count}}</span>
+							</div>
+							<div class="cartcontrol-wrapper">
+								<cartcontrol :food="food"></cartcontrol>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</transition>
+		<transition name="fade">
+			<div class="list-mask" v-show="listShow" @click="hideList"></div>
+		</transition>
 	</div>
 </template>
 
 <script type="text/ecmascript-6">
+	import BScroll from 'better-scroll';
+	import cartcontrol from '@/components/cartcontrol/cartcontrol';
+	
 	export default {
 		props: {
 			deliveryPrice: { // 配送费
@@ -63,9 +93,16 @@
 					},
 					{
 						show: false
+					},
+					{
+						show: false
+					},
+					{
+						show: false
 					}
 				],
-				dropBalls: []
+				dropBalls: [], // 关联被触发下落的小球
+				fold: true
 			};
 		},
 		computed: {
@@ -99,6 +136,32 @@
 				} else {
 					return 'enough';
 				}
+			},
+			listShow() {
+				if (!this.totalCount) {
+					this.fold = true;
+					return false;
+				}
+				let show = !this.fold;
+				if (show) {
+					if (!this.scroll) {
+						this.$nextTick(() => {
+							this.scroll = new BScroll(this.$refs.listContent, {
+								click: true
+							});
+						});
+					} else {
+						/**
+						 * 这个插件有毒， 在页面上升的时候处于动态， 这时候获取元素更新滚动是没效果的，一定要停下来再获取
+						 * 优化再次点击木有滚动效果
+						 */
+						this.$nextTick(() => {
+							this.scroll.refresh();
+						});
+					}
+				}
+				
+				return show;
 			}
 		},
 		methods: {
@@ -130,6 +193,10 @@
 					}
 				}
 			},
+			/**
+			 * @param {DOMElement} 执行动画的节点
+			 * @param {fn} done 当仅使用 JavaScript 式过渡的时候， 在 enter 和 leave 钩子函数中，必须有 done 回调函数。否则，这两个钩子函数会被同步调用，过渡会立即完成。
+			 */
 			dropping (el, done) {
 				/* eslint-disable no-unused-vars */
 				let rf = el.offsetHeight; // 强制重绘
@@ -142,26 +209,46 @@
 					el.addEventListener('transitionend', done);
 				});
 			},
-			afterDropped (el) {
+			dropped (el) {
 				let ball = this.dropBalls.shift();
 				if (ball) {
 					ball.show = false;
 					el.style.display = 'none';
 				}
 			},
-			leave (el, done) {
-				done();
+			toggleList(event) {
+				if(!this.totalCount) return;
+				this.fold = !this.fold;
+			},
+			empty() {
+				this.selectFoods.forEach((food) => {
+					food.count = 0;
+				});
+			},
+			hideList() {
+				this.fold = true;
+			},
+			pay() {
+				if (this.totalPrice < this.minPrice) {
+					return;
+				}
+				window.alert('商城开发暂且到这里');
 			}
+		},
+		components: {
+			cartcontrol
 		}
 	};
 </script>
 
 <style lang="sass" rel="stylesheet/sass">
+	@import '../../common/styles/mixin.scss';
+
 	.shopcart
 		position: fixed
 		left: 0
 		bottom: 0
-		z-index: 50
+		z-index: 50 /* 注意层级 */
 		width: 100%
 		height: 48px
 		.content
@@ -256,4 +343,75 @@
 				border-radius: 50%
 				background: rgb(0, 160, 200)
 				transition: all .4s linear
+		.shopcart-list
+			position: absolute
+			left: 0
+			top: 0
+			z-index: -1
+			width: 100%
+			transform: translate3d(0, -100%, 0)
+			/*animate.css 里面的动画也未必适用， 那些只是固定某些动画，详细还需要进去源码看看到底怎么运行*/
+			&.fold-enter-active, 
+			&.fold-leave-active 
+				transition: all .5s
+			&.fold-enter,
+			&.fold-leave-to
+				transform: translate3d(0, 0, 0)
+			.list-header
+				height: 40px
+				line-height: 40px
+				padding: 0 18px
+				background: #f3f3f7
+				border-bottom: 1px solid rgba(7 ,17, 27, 0.1)
+				.title
+					float: left
+					font-size: 14px
+					color: rgb(7, 17, 27)
+				.empty
+					float: right
+					font-size: 12px
+					color: rgb(0, 160, 220)
+			.list-content
+				padding: 0 18px
+				max-height: 217px /* 定义了最大高度 */
+				overflow: hidden
+				background: #fff
+				.food
+					position: relative
+					padding: 12px 0
+					box-sizing: border-box
+					@include border-1px(rgba(7, 17, 27, .1))
+					.name
+						line-height: 24px
+						font-size: 14px
+						color: rgb(7, 17, 27)
+					.price
+						position: absolute
+						right: 90px
+						bottom: 12px
+						line-height: 24px
+						font-size: 14px
+						font-weight: 700
+						color: rgb(240, 20 , 20)
+					.cartcontrol-wrapper
+						position: absolute
+						right: 0
+						bottom: 6px
+		.list-mask
+			position: fixed
+			top: 0
+			left: 0
+			right: 0
+			bottom: 0
+			z-index: -2 /* 最底层 */
+			opacity: 1 /* 默认为1 */ 
+			backdrop-filter: blur(10px)
+			background: rgba(7 ,17, 27, .6)		
+			&.fade-enter-active,
+			&.fade-leave-active
+				transition: all .4s
+			&.fade-enter,
+			&.fade-leave-active
+				opacity: 0
+			
 </style>
