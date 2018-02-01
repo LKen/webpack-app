@@ -137,7 +137,10 @@
 				for(let i = 0; i < foodList.length && (height += foodList[i].clientHeight, this.listHeight.push(height)); ++i){};
 			},
 			_drop(target) {
-				this.$refs.shopcart.drop(target);
+				// 优化动画
+				this.$nextTick(() => {
+					this.$refs.shopcart.drop(target);
+				});
 			}
 		},
 		components: {

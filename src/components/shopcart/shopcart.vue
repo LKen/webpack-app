@@ -16,16 +16,18 @@
 					{{payDesc}}
 				</div>
 			</div>
-			<div class="ball-wrapper">
-				<transition-group name="drop" tag="div" 
-					@before-enter="beforeEnter"
-					v-on:enter="enter"
-					@after-enter="afterEnter"
-					>
-					<div class="ball" v-for="(ball, index) in balls" v-show="ball.show" :key="index">
-						<span class="inner inner-hook"></span>
+			<!-- 这里不能用transition-group 虽然效果用v-for渲染出来，但是小球的动画效果是单独一个一个触发的,并不是整体列表动画 -->
+			<div class="ball-wrapper" v-for="(ball, index) in balls" :key="index" v-bind:css="false" :data-id="index">
+				<transition name="drop"
+						@before-enter="beforeDrop" 
+						@enter="dropping" 
+						@after-enter="afterDropped" 
+						v-on:leave="leave"
+						>
+					<div class="ball" v-show="ball.show">
+						<div class="inner inner-hook"></div>
 					</div>
-				</transition-group>
+				</transition>
 			</div>
 		</div>
 	</div>
@@ -111,44 +113,44 @@
 					}
 				}
 			},
-			beforeEnter(el) {
+			beforeDrop (el) {
 				let count = this.balls.length;
 				while (count--) {
 					let ball = this.balls[count];
 					if (ball.show) {
 						let rect = ball.el.getBoundingClientRect();
-						let x = rect.left - 32,
-							y = -(window.innerHeight - rect.top - 22);
-							
+						let left = rect.left - 32,
+							top = -(window.innerHeight - rect.top - 22);
 						el.style.display = '';
-						el.style.webkitTransform = `translate3d(0, ${y}px, 0)`;
-						el.style.transform = `translate3d(0, ${y}px, 0)`;
-						let inner = el.getElementsByClassName('inner-hook')[0];
-						console.log(inner);
-						inner.style.webkitTransform = `translate3d(0, ${x}px, 0)`;
-						inner.style.transform = `translate3d(0, ${x}px, 0)`;
+                        el.style.webkitTransform = `translate3d(0,${top}px,0)`;
+                        el.style.transform = `translate3d(0,${top}px,0)`;
+                        let inner = el.getElementsByClassName('inner-hook')[0];
+                        inner.style.webkitTransform = `translate3d(${left}px,0,0)`;
+                        inner.style.transform = `translate3d(${left}px,0,0)`;
 					}
 				}
 			},
-			enter(el, done) {
+			dropping (el, done) {
 				/* eslint-disable no-unused-vars */
 				let rf = el.offsetHeight; // 强制重绘
 				this.$nextTick(() => {
 					el.style.webkitTransform = 'translate3d(0, 0, 0)';
 					el.style.transform = 'translate3d(0, 0, 0)';
-					
 					let inner = el.getElementsByClassName('inner-hook')[0];
 					inner.style.webkitTransform = 'translate3d(0, 0, 0)';
 					inner.style.transform = 'translate3d(0, 0, 0)';
+					el.addEventListener('transitionend', done);
 				});
-				done();
 			},
-			afterEnter(el) {
+			afterDropped (el) {
 				let ball = this.dropBalls.shift();
 				if (ball) {
 					ball.show = false;
 					el.style.display = 'none';
 				}
+			},
+			leave (el, done) {
+				done();
 			}
 		}
 	};
@@ -246,13 +248,12 @@
 			left: 32px
 			bottom: 22px
 			z-index: 200
-			&.drop-enter,
-			&.drop-leave
-				transition: all 4s
+			transition: all .4s cubic-bezier(.63,.01,.81,.54) /*贝塞尔曲线*/
 			.inner
+				/* display: inline-block */
 				width: 16px
 				height: 16px
 				border-radius: 50%
 				background: rgb(0, 160, 200)
-				transition: all 4s
+				transition: all .4s linear
 </style>
