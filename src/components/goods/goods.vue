@@ -2,8 +2,12 @@
 	<div class="goods">
 		<div class="menu-wrapper" ref="menuWrapper">
 			<ul>
-				<li v-for="(item, index) in goods" :key="item.id" class="menu-item" :class="{'current': currentIndex === index}" 
-					@click="selectMenu(index, $event)">
+				<li 
+					v-for="(item, index) in goods" 
+					:key="item.id" class="menu-item" 
+					:class="{'current': currentIndex === index}" 
+					@click="selectMenu(index, $event)"
+					>
 					<span class="text border-1px">
 						<span class="icon" v-show="item.type>-1" :class="classMap[item.type]"></span>{{item.name}}
 					</span>

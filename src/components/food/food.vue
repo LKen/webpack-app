@@ -36,10 +36,31 @@
 						:select-type="selectType" 
 						:only-content="onlyContent" 
 						:desc="desc" 
-						:ratings="food.ratings"></ratingselect>
+						:ratings="food.ratings" 
+						@ratingtype_select="_ratingtypeSelect($event)" 
+						@content_toggle="_contentToggle($event)" 
+						ref="ratingselect" 
+						></ratingselect>
+					<div class="rating-wrapper">
+						<ul v-show="food.ratings && food.ratings.length">
+							<li class="rating-item" v-for="(rating, index) in food.ratings" 
+								:key="index" 
+								v-show="needShow(rating.rateType, rating.text)"
+								>
+								<div class="user">
+									<span class="name">{{rating.username}}</span>
+									<img src="" alt="" class="avatar" width="12px" height="12px" :src="rating.avatar" />
+								</div>
+								<div class="time">{{rating.rateTime}}</div>
+								<p class="text">
+									<span class="iconfont icon-custom-praise" :class="{'reverse': rating.rateType === 1}"></span>{{rating.text}}
+								</p>
+							</li>
+						</ul>
+						<div class="no-rating" v-show="!food.ratings || !food.ratings.length">暂无评价</div>
+					</div>
 				</div>
 			</div>
-			
 		</div>
 	</transition>
 </template>
@@ -49,7 +70,7 @@
 	import split from '@/components/split/split';
 	import ratingselect from '@/components/ratingselect/ratingselect';
 	import BScroll from 'better-scroll';
-	
+	import {formatDate} from '@/common/js/date';
 	/* eslint-disable no-unused-vars */
 	const POSITIVE = 0;
 	const NEGATIVE = 1;
@@ -75,14 +96,13 @@
 			};
 		},
 		methods: {
+			/**
+			 * 由父组件调用
+			 */
 			show() {
 				this.showFlag = true;
-				this.selectType = ALL;
-				this.onlyContent = true;
-				
 				this.$nextTick(() => {
 					if (!this.scroll) {
-						console.log(this.$refs.food);
 						this.scroll = new BScroll(this.$refs.food, {
 							click: true
 						});
@@ -90,6 +110,11 @@
 						this.scroll.refresh();
 					}
 				});
+				
+				var ratingselect = this.$refs.ratingselect;
+				ratingselect.setSelectType(ALL);
+				ratingselect.setContent(false);
+				
 			},
 			hide() {
 				this.showFlag = false;
@@ -103,6 +128,46 @@
 			},
 			_drop(target) {
 				this.$emit('cartAdd', target);
+			},
+			_ratingtypeSelect(type) {
+				this.selectType = type;
+				this.$nextTick(() => {
+					if (!this.scroll) {
+						this.scroll = new BScroll(this.$refs.food, {
+							click: true
+						});
+					} else {
+						this.scroll.refresh();
+					}
+				});
+			},
+			_contentToggle(bool) {
+				this.onlyContent = bool;
+				this.$nextTick(() => {
+					if (!this.scroll) {
+						this.scroll = new BScroll(this.$refs.food, {
+							click: true
+						});
+					} else {
+						this.scroll.refresh();
+					}
+				});
+			},
+			needShow(type, text) {
+				if (this.onlyContent && !text) {
+					return false;
+				} else if (this.selectType === ALL) {
+					return true;
+				} else {
+					return type === this.selectType;
+				}
+			}
+		},
+		filters: {
+			formatDate(time) {
+				let date = new Date(time);
+				console.log(formatDate);
+				return formatDate(date, 'yyy-MM-dd hh:mm'); //yyyy-MM-dd hh:mm:ss
 			}
 		},
 		components: {
@@ -114,6 +179,8 @@
 </script>
 
 <style lang="sass" rel="stylesheet/sass">
+	@import '../../common/styles/mixin.scss';
+	
 	.food
 		position: fixed
 		left: 0 
@@ -228,5 +295,46 @@
 				margin-left: 18px
 				font-size: 14px
 				color: rgb(7, 17, 27)
-				
+			.rating-wrapper
+				padding: 0 18px
+				.rating-item
+					position: relative
+					padding: 16px 0
+					@include border-1px(rgba(7, 17, 27, 0.1))
+					.user
+						position: absolute
+						right: 0
+						top: 16px
+						line-height: 12px
+						font-size: 0
+						.name
+							display: inline-block
+							margin-right: 6px
+							vertical-align: top
+							font-size: 10px
+							color: rgb(147, 153, 159)
+						.avatar
+							border-radius: 50%
+					.time
+						margin-bottom: 6px
+						line-height: 12px
+						font-size: 10px
+						color: rgb(147, 153, 159)
+					.text
+						line-height: 16px
+						font-size: 12px
+						color: rgb(7, 17, 27)
+						.icon-custom-praise
+							display: inline-block
+							margin-right: 4px
+							line-height: 16px
+							font-size: 12px
+							color: rgb(0, 160, 220)
+							&.reverse
+								transform: scaleY(-1)
+								color: rgb(147, 153, 159)
+				.no-rating		
+					padding: 16px
+					font-size: 12px
+					color: rgb(147, 153, 159)
 </style>
