@@ -9,7 +9,7 @@ Vue.use(Router);
 export default new Router({
   routes: [
     {
-      path: '/goods',
+      path: '/goods', // 映射 router-link
       name: 'goods',
       component: goods
     },

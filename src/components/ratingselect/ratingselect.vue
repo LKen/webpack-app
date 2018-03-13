@@ -56,9 +56,8 @@
 		},
 		data() {
 			/**********************************/
-			/* 发现了一个问题， key的名字 _ + xxx 是会导致一些问题*/
+			/* 发现了一个问题， key的命名：  _ + xxx 是会导致一些问题*/
 			/**********************************/
-			console.log(this.selectType, this.onlyContent);
 			return {
 				d_selectType: this.selectType,
 				d_onlyContent: this.onlyContent

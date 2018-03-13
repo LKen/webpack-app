@@ -51,7 +51,7 @@
 									<span class="name">{{rating.username}}</span>
 									<img src="" alt="" class="avatar" width="12px" height="12px" :src="rating.avatar" />
 								</div>
-								<div class="time">{{rating.rateTime}}</div>
+								<div class="time">{{rating.rateTime | formatDate}}</div>
 								<p class="text">
 									<span class="iconfont icon-custom-praise" :class="{'reverse': rating.rateType === 1}"></span>{{rating.text}}
 								</p>
@@ -166,8 +166,7 @@
 		filters: {
 			formatDate(time) {
 				let date = new Date(time);
-				console.log(formatDate);
-				return formatDate(date, 'yyy-MM-dd hh:mm'); //yyyy-MM-dd hh:mm:ss
+				return formatDate(date, 'yyyy-MM-dd hh:mm'); //yyyy-MM-dd hh:mm:ss
 			}
 		},
 		components: {
